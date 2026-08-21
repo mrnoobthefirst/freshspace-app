@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRESHSPACE | Login or Sign Up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #090d16; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .auth-card { background: #131b2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #00f2fe; margin-bottom: 1.5rem; font-weight: 800; }
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.4rem; }
+        input { width: 100%; padding: 0.8rem; background: #090d16; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; box-sizing: border-box; }
+        .btn { width: 100%; padding: 0.9rem; background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; border-radius: 8px; font-weight: 700; color: #000; cursor: pointer; margin-top: 1rem; }
+        .toggle-btn { text-align: center; margin-top: 1rem; font-size: 0.85rem; color: #94a3b8; cursor: pointer; }
+        .toggle-btn span { color: #00f2fe; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <h2 id="auth-title">Login to FRESHSPACE</h2>
+        <form id="auth-form">
+            <div class="form-group" id="name-group" style="display: none;">
+                <label>Full Name</label>
+                <input type="text" id="name" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" placeholder="john@example.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn" id="submit-btn">Login</button>
+        </form>
+        <div class="toggle-btn" id="toggle-auth">Don't have an account? <span>Sign Up</span></div>
+    </div>
+
+    <script>
+        let isLogin = true;
+        const toggleAuth = document.getElementById('toggle-auth');
+        const nameGroup = document.getElementById('name-group');
+        const authTitle = document.getElementById('auth-title');
+        const submitBtn = document.getElementById('submit-btn');
+
+        toggleAuth.addEventListener('click', () => {
+            isLogin = !isLogin;
+            nameGroup.style.display = isLogin ? 'none' : 'block';
+            authTitle.innerText = isLogin ? 'Login to FRESHSPACE' : 'Create Account';
+            submitBtn.innerText = isLogin ? 'Login' : 'Sign Up';
+            toggleAuth.innerHTML = isLogin ? "Don't have an account? <span>Sign Up</span>" : "Already have an account? <span>Login</span>";
+        });
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+
+            const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+            const payload = isLogin ? { email, password } : { name, email, password };
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                localStorage.setItem('fs_token', data.token);
+                localStorage.setItem('fs_user', JSON.stringify(data.user));
+                window.location.href = '/dashboard.html';
+            } else {
+                alert(data.message);
+            }
+        });
+    </script>
+</body>
+</html>
