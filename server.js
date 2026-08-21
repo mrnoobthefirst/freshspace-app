@@ -12,10 +12,12 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/freshspace
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connect to MongoDB (Render or Local)
+// Connect to MongoDB
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Database Connected Successfully'))
-  .catch(err => console.log('Running in Local DB Fallback Mode:', err.message));
+  .catch(err => console.log('Running in Fallback Mode / DB Connection Warning:', err.message));
+
+// --- SCHEMAS & MODELS ---
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -40,7 +42,25 @@ const bookingSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Booking = mongoose.model('Booking', bookingSchema);
 
-// Auth Middleware
+// --- STATIC DATA ---
+
+const HUB_LOCATIONS = [
+  { id: 'hub-1', name: 'New Delhi Railway Station (NDLS)', type: 'Railway', totalPods: 6, availablePods: 4 },
+  { id: 'hub-2', name: 'Mumbai Central Railway Hub', type: 'Railway', totalPods: 6, availablePods: 2 },
+  { id: 'hub-3', name: 'Bengaluru Airport Terminal 1', type: 'Airport', totalPods: 8, availablePods: 5 },
+  { id: 'hub-4', name: 'Varanasi Pilgrimage Express Center', type: 'Pilgrimage', totalPods: 4, availablePods: 1 },
+  { id: 'hub-5', name: 'Yamuna Expressway Plaza Hub', type: 'Highway', totalPods: 6, availablePods: 6 }
+];
+
+const PRICING_TIERS = {
+  express: { name: 'Express Restroom', duration: 10, price: 49 },
+  quick: { name: 'Quick Refresh', duration: 20, price: 199 },
+  full: { name: 'Full Shower & Kit', duration: 35, price: 349 },
+  executive: { name: 'Executive Transit Pass', duration: 60, price: 2499 }
+};
+
+// --- AUTH MIDDLEWARE ---
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -53,9 +73,65 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// --- AUTH ROUTES ---
+// --- PUBLIC & LANDING PAGE ROUTES ---
 
-// Signup Route
+// API: Get Live Hub Availability (Fixes loading spinner on homepage)
+app.get('/api/hubs', (req, res) => {
+  res.json({ success: true, hubs: HUB_LOCATIONS });
+});
+
+// API: Financial Model Simulator
+app.post('/api/calculate-financials', (req, res) => {
+  const { dailyBookingsPerRoom = 8, numPods = 6 } = req.body;
+  const avgTicketPrice = 260;
+  const fixedOpex = 135000;
+
+  const monthlyRevenue = Math.round(dailyBookingsPerRoom * numPods * 30 * (avgTicketPrice / 6));
+  const monthlyProfit = monthlyRevenue - fixedOpex;
+
+  res.json({
+    dailyBookingsPerRoom,
+    monthlyRevenue,
+    fixedOpex,
+    monthlyProfit,
+    isProfitable: monthlyProfit > 0
+  });
+});
+
+// API: Guest Pod Booking (Homepage Instant Pass Generator)
+app.post('/api/book-pod', (req, res) => {
+  const { hubId, tier, timeSlot, passengerName } = req.body;
+
+  const hub = HUB_LOCATIONS.find(h => h.id === hubId);
+  const selectedTier = PRICING_TIERS[tier] || PRICING_TIERS.quick;
+
+  if (!hub || hub.availablePods <= 0) {
+    return res.status(400).json({ success: false, message: 'No pods available at selected hub.' });
+  }
+
+  hub.availablePods -= 1;
+
+  const newBooking = {
+    bookingId: 'FS-' + Math.floor(100000 + Math.random() * 900000),
+    passengerName: passengerName || 'Guest Traveler',
+    hubName: hub.name,
+    tierName: selectedTier.name,
+    duration: selectedTier.duration,
+    amount: selectedTier.price,
+    timeSlot,
+    createdAt: new Date().toISOString()
+  };
+
+  res.json({
+    success: true,
+    booking: newBooking,
+    qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${newBooking.bookingId}`
+  });
+});
+
+// --- AUTHENTICATION ROUTES ---
+
+// Register User
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -69,11 +145,11 @@ app.post('/api/auth/register', async (req, res) => {
     const token = jwt.sign({ userId: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ success: true, token, user: { name: user.name, email: user.email } });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error during registration' });
   }
 });
 
-// Login Route
+// Login User
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -86,13 +162,13 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ userId: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ success: true, token, user: { name: user.name, email: user.email } });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error during login' });
   }
 });
 
-// --- APPLICATION & BOOKING ROUTES ---
+// --- PROTECTED USER DASHBOARD ROUTES ---
 
-// Create Booking (Protected Route)
+// Create User Booking (Saved to Database)
 app.post('/api/bookings', authenticateToken, async (req, res) => {
   try {
     const { hubName, tierName, duration, amount, timeSlot } = req.body;
@@ -103,8 +179,8 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
       bookingId,
       hubName,
       tierName,
-      duration,
-      amount,
+      duration: duration || 20,
+      amount: amount || 199,
       timeSlot
     });
 
@@ -115,7 +191,7 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
   }
 });
 
-// Fetch Logged-in User Bookings (Protected Route)
+// Fetch User's Booking History
 app.get('/api/user/bookings', authenticateToken, async (req, res) => {
   try {
     const bookings = await Booking.find({ userId: req.user.userId }).sort({ createdAt: -1 });
@@ -125,4 +201,5 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
   }
 });
 
+// Start Server
 app.listen(PORT, () => console.log(`FRESHSPACE Full-Stack App running on port ${PORT}`));
