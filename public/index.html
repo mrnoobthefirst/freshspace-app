@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRESHSPACE | Next-Gen Micro-Rest Pods</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #090d16;
+            --surface: #131b2e;
+            --surface-card: #1c273e;
+            --primary: #00f2fe;
+            --accent: #10b981;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 5rem; }
+
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 8%; border-bottom: 1px solid var(--border); background: rgba(9,13,22,0.9); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        h1, h2, h3 { font-weight: 800; }
+        .section-title { font-size: 2rem; margin-bottom: 0.5rem; text-align: center; }
+        .section-subtitle { text-align: center; color: var(--muted); margin-bottom: 2.5rem; }
+
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; transition: 0.3s; }
+        .card:hover { border-color: var(--primary); transform: translateY(-3px); }
+
+        /* Interactive Booking Widget */
+        .booking-widget { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; max-width: 750px; margin: 0 auto; }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; color: var(--muted); font-size: 0.9rem; }
+        input, select { width: 100%; padding: 0.9rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: #fff; font-size: 1rem; outline: none; }
+        input:focus, select:focus { border-color: var(--primary); }
+
+        .btn { display: inline-block; width: 100%; background: linear-gradient(135deg, var(--primary), #4facfe); color: #000; font-weight: 700; padding: 1rem; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; text-align: center; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; transform: scale(1.01); }
+
+        /* Ticket Confirmation */
+        .ticket { display: none; background: #0f172a; border: 2px dashed var(--primary); border-radius: 16px; padding: 2rem; text-align: center; margin-top: 2rem; }
+        .ticket img { margin: 1.5rem 0; border-radius: 8px; }
+
+        /* Financial Simulator Slider */
+        .sim-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; margin-top: 3rem; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center; margin-top: 1.5rem; }
+        .stat-card { background: var(--bg); padding: 1.2rem; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); margin-top: 0.3rem; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">FRESHSPACE</div>
+        <span style="color: var(--muted); font-size: 0.9rem;">Ultra-Hygienic Transit Pods</span>
+    </nav>
+
+    <div class="container">
+        
+        <!-- Live Hub Availability Section -->
+        <section style="margin-bottom: 4rem;">
+            <h2 class="section-title">Live Pod Availability</h2>
+            <p class="section-subtitle">Realtime hub tracking powered by our server API</p>
+            <div class="grid" id="hubs-grid">
+                <div class="card"><p style="color: var(--muted);">Loading live transit hubs...</p></div>
+            </div>
+        </section>
+
+        <!-- Interactive Live Booking System -->
+        <section style="margin-bottom: 5rem;">
+            <h2 class="section-title">Book Your Micro-Rest Session</h2>
+            <p class="section-subtitle">Reserve online, receive your digital key, unlock instantly</p>
+            
+            <div class="booking-widget">
+                <form id="booking-form">
+                    <div class="form-group">
+                        <label>Passenger Name</label>
+                        <input type="text" id="passengerName" placeholder="e.g. Alex Smith" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Location Hub</label>
+                        <select id="hubSelect" required>
+                            <!-- Dynamically loaded -->
+                        </select>
+                    </div>
+
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label>Service Tier</label>
+                            <select id="tierSelect" required>
+                                <option value="express">Express Restroom (10 mins) - ₹49</option> <!-- -->
+                                <option value="quick" selected>Quick Refresh (20 mins) - ₹199</option> <!-- -->
+                                <option value="full">Full Shower & Kit (35 mins) - ₹349</option> <!-- -->
+                                <option value="executive">Executive Transit Pass (60 mins) - ₹2499</option> <!-- -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Arrival Slot</label>
+                            <input type="time" id="timeSlot" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn">Reserve Pod & Generate Access Pass</button>
+                </form>
+
+                <div class="ticket" id="ticket-display">
+                    <h3 style="color: var(--accent);">Booking Confirmed!</h3>
+                    <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem;">Present this QR pass at the pod door scanner</p>
+                    <img id="qr-code" src="" alt="Access Pass QR Code">
+                    <p><b id="ticket-id" style="color: var(--primary);"></b></p>
+                    <p id="ticket-details" style="font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem;"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Investor Calculator -->
+        <section>
+            <h2 class="section-title">Interactive Financial Simulator</h2>
+            <p class="section-subtitle">Simulate Unit Economics (Per Hub - 6 Pods)</p>
+
+            <div class="sim-box">
+                <label style="font-size: 1rem; font-weight: 600;">Adjust Daily Bookings per Pod: <span id="bookings-label" style="color: var(--primary);">8 Bookings/Day</span></label> <!-- -->
+                <input type="range" id="simSlider" min="2" max="20" value="8" style="margin-top: 1rem;" oninput="runFinancialSim(this.value)">
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <label>Monthly Revenue</label>
+                        <div class="stat-value" id="sim-rev">₹1,87,000</div> <!-- -->
+                    </div>
+                    <div class="stat-card">
+                        <label>Est. Fixed OPEX</label>
+                        <div class="stat-value" style="color: #f43f5e;">₹1,35,000</div> <!-- -->
+                    </div>
+                    <div class="stat-card">
+                        <label>Est. Net Profit</label>
+                        <div class="stat-value" id="sim-profit" style="color: var(--accent);">+₹52,000</div> <!-- -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Fetch Live Hub Locations from Server API
+        async function loadHubs() {
+            const res = await fetch('/api/hubs');
+            const data = await res.json();
+            
+            const hubsGrid = document.getElementById('hubs-grid');
+            const hubSelect = document.getElementById('hubSelect');
+            
+            hubsGrid.innerHTML = '';
+            hubSelect.innerHTML = '';
+
+            data.hubs.forEach(hub => {
+                // Populate Card Grid
+                hubsGrid.innerHTML += `
+                    <div class="card">
+                        <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--primary); font-weight: 700;">${hub.type} Hub</span> <!-- -->
+                        <h3 style="margin: 0.5rem 0;">${hub.name}</h3>
+                        <p style="color: var(--muted); font-size: 0.9rem;">Pods Status: <b>${hub.availablePods} / ${hub.totalPods} Available</b></p>
+                    </div>
+                `;
+
+                // Populate Dropdown Options
+                hubSelect.innerHTML += `<option value="${hub.id}">${hub.name} (${hub.availablePods} Pods Available)</option>`;
+            });
+        }
+
+        // Handle Booking Submission via Express API
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                passengerName: document.getElementById('passengerName').value,
+                hubId: document.getElementById('hubSelect').value,
+                tier: document.getElementById('tierSelect').value,
+                timeSlot: document.getElementById('timeSlot').value
+            };
+
+            const res = await fetch('/api/book-pod', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                document.getElementById('qr-code').src = result.qrCodeUrl;
+                document.getElementById('ticket-id').innerText = result.booking.bookingId;
+                document.getElementById('ticket-details').innerText = `${result.booking.passengerName} | ${result.booking.hubName} | Tier: ${result.booking.tierName} (${result.booking.duration} mins)`;
+                document.getElementById('ticket-display').style.display = 'block';
+                loadHubs(); // Refresh hub stock
+            } else {
+                alert(result.message);
+            }
+        });
+
+        // Run Interactive Pitch Financials API
+        async function runFinancialSim(val) {
+            document.getElementById('bookings-label').innerText = `${val} Bookings/Day`;
+
+            const res = await fetch('/api/calculate-financials', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dailyBookingsPerRoom: parseInt(val) })
+            });
+
+            const data = await res.json();
+
+            document.getElementById('sim-rev').innerText = `₹${data.monthlyRevenue.toLocaleString()}`;
+            
+            const profitElem = document.getElementById('sim-profit');
+            profitElem.innerText = `${data.monthlyProfit >= 0 ? '+' : ''}₹${data.monthlyProfit.toLocaleString()}`;
+            profitElem.style.color = data.monthlyProfit >= 0 ? 'var(--accent)' : '#f43f5e';
+        }
+
+        // Initialize Data on Load
+        loadHubs();
+    </script>
+</body>
+</html>
