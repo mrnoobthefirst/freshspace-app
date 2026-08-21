@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRESHSPACE | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #090d16; --surface: #131b2e; --primary: #00f2fe; --text: #f8fafc; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; padding: 2rem; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 2rem; }
+        .btn-logout { background: #f43f5e; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .card { background: var(--surface); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); }
+        .booking-item { background: #090d16; padding: 1rem; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 1rem; }
+        input, select { width: 100%; padding: 0.8rem; background: #090d16; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; margin-bottom: 1rem; box-sizing: border-box; }
+        .btn { width: 100%; padding: 0.9rem; background: linear-gradient(135deg, var(--primary), #4facfe); border: none; border-radius: 8px; font-weight: 700; color: #000; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>FRESHSPACE <span style="font-weight: 400; font-size: 1rem;">| Welcome, <b id="user-name">User</b></span></h2>
+        <button class="btn-logout" id="logout-btn">Logout</button>
+    </div>
+
+    <div class="grid">
+        <!-- New Booking Form -->
+        <div class="card">
+            <h3 style="margin-top:0;">Book a Micro-Rest Pod</h3>
+            <form id="booking-form">
+                <label>Select Transit Station</label>
+                <select id="hub">
+                    <option value="New Delhi Railway Station">New Delhi Railway Station (NDLS)</option>
+                    <option value="Bengaluru Airport T1">Bengaluru Airport Terminal 1</option>
+                    <option value="Mumbai Central Hub">Mumbai Central Hub</option>
+                </select>
+
+                <label>Service Tier</label>
+                <select id="tier">
+                    <option value="Quick Refresh (₹199)">Quick Refresh - 20 Mins (₹199)</option>
+                    <option value="Full Shower Kit (₹349)">Full Shower Kit - 35 Mins (₹349)</option>
+                </select>
+
+                <label>Select Time Slot</label>
+                <input type="time" id="slot" required>
+
+                <button type="submit" class="btn">Confirm & Save to Database</button>
+            </form>
+        </div>
+
+        <!-- Database Booking History -->
+        <div class="card">
+            <h3 style="margin-top:0;">Your Saved Booking History</h3>
+            <div id="history-list"><p style="color:#94a3b8;">Loading history from database...</p></div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('fs_token');
+        const user = JSON.parse(localStorage.getItem('fs_user') || '{}');
+
+        if (!token) window.location.href = '/login.html';
+        document.getElementById('user-name').innerText = user.name || 'User';
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        });
+
+        // Fetch User Bookings from DB
+        async function fetchBookings() {
+            const res = await fetch('/api/user/bookings', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const container = document.getElementById('history-list');
+
+            if (data.success && data.bookings.length > 0) {
+                container.innerHTML = data.bookings.map(b => `
+                    <div class="booking-item">
+                        <strong style="color:var(--primary);">${b.bookingId}</strong> - ${b.hubName}<br>
+                        <small style="color:#94a3b8;">Tier: ${b.tierName} | Time: ${b.timeSlot} | Date: ${new Date(b.createdAt).toLocaleDateString()}</small>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p style="color:#94a3b8;">No bookings found in database.</p>';
+            }
+        }
+
+        // Create New Booking
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const hubName = document.getElementById('hub').value;
+            const tierVal = document.getElementById('tier').value;
+            const timeSlot = document.getElementById('slot').value;
+
+            const res = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    hubName,
+                    tierName: tierVal,
+                    duration: 20,
+                    amount: 199,
+                    timeSlot
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert('Booking created and saved to MongoDB Database!');
+                fetchBookings();
+            } else {
+                alert(data.message);
+            }
+        });
+
+        fetchBookings();
+    </script>
+</body>
+</html>
