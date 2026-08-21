@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRESHSPACE | My Account</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #090d16;
+            --surface: #131b2e;
+            --primary: #00f2fe;
+            --accent: #10b981;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 8%; border-bottom: 1px solid var(--border); background: rgba(9,13,22,0.9); }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; text-decoration: none; }
+
+        .container { max-width: 900px; margin: 3rem auto; padding: 0 1.5rem; }
+        .profile-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .user-info h2 { font-size: 1.5rem; margin-bottom: 0.3rem; }
+        .user-info p { color: var(--muted); font-size: 0.95rem; }
+
+        .btn-logout { background: rgba(244, 63, 94, 0.2); border: 1px solid #f43f5e; color: #f43f5e; padding: 0.7rem 1.2rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .btn-logout:hover { background: #f43f5e; color: #fff; }
+
+        .section-title { font-size: 1.3rem; margin-bottom: 1rem; color: var(--primary); }
+        .booking-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/" class="logo">FRESHSPACE</a>
+        <a href="/" style="color: var(--muted); text-decoration: none; font-weight: 600;">← Back to Home</a>
+    </nav>
+
+    <div class="container">
+        <div class="profile-card">
+            <div class="user-info">
+                <h2 id="u-name">Loading account...</h2>
+                <p id="u-email">Please wait</p>
+            </div>
+            <button class="btn-logout" onclick="logout()">Log Out</button>
+        </div>
+
+        <h3 class="section-title">Your Pod Passes & Reservations</h3>
+        <div id="bookings-list">
+            <p style="color: var(--muted);">Fetching your active reservations...</p>
+        </div>
+    </div>
+
+    <script>
+        async function loadProfile() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('u-name').innerText = data.user.name;
+                    document.getElementById('u-email').innerText = data.user.email;
+                    loadBookings(token);
+                } else {
+                    logout();
+                }
+            } catch (err) {
+                logout();
+            }
+        }
+
+        async function loadBookings(token) {
+            const res = await fetch('/api/user/bookings', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const list = document.getElementById('bookings-list');
+
+            if (data.success && data.bookings.length > 0) {
+                list.innerHTML = '';
+                data.bookings.forEach(b => {
+                    list.innerHTML += `
+                        <div class="booking-card">
+                            <div>
+                                <b style="color: var(--primary);">${b.bookingId}</b> - ${b.hubName}
+                                <div style="color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem;">
+                                    ${b.tierName} (${b.duration} mins) • Arrival: ${b.timeSlot}
+                                </div>
+                            </div>
+                            <b style="color: var(--accent);">₹${b.amount}</b>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; text-align: center; color: var(--muted);">No bookings found yet. Book your first session from the homepage!</div>`;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>
