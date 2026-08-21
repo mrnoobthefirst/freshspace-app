@@ -12,14 +12,12 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/freshspace
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connect to MongoDB
+// Database Connection
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Database Connected Successfully'))
   .catch(err => console.log('Running in Fallback Mode / DB Connection Warning:', err.message));
 
-// --- SCHEMAS & MODELS ---
-
-// User Schema
+// Schemas
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -27,7 +25,6 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-// Booking Schema
 const bookingSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   bookingId: { type: String, required: true },
@@ -42,8 +39,7 @@ const bookingSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Booking = mongoose.model('Booking', bookingSchema);
 
-// --- STATIC DATA ---
-
+// Static Hub Data
 const HUB_LOCATIONS = [
   { id: 'hub-1', name: 'New Delhi Railway Station (NDLS)', type: 'Railway', totalPods: 6, availablePods: 4 },
   { id: 'hub-2', name: 'Mumbai Central Railway Hub', type: 'Railway', totalPods: 6, availablePods: 2 },
@@ -59,12 +55,11 @@ const PRICING_TIERS = {
   executive: { name: 'Executive Transit Pass', duration: 60, price: 2499 }
 };
 
-// --- AUTH MIDDLEWARE ---
-
+// Auth Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ success: false, message: 'Access Denied. Please Login.' });
+  if (!token) return res.status(401).json({ success: false, message: 'Access Denied' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ success: false, message: 'Invalid or Expired Token' });
@@ -73,35 +68,56 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// --- PUBLIC & LANDING PAGE ROUTES ---
-
-// API: Get Live Hub Availability (Fixes loading spinner on homepage)
+// API Routes
 app.get('/api/hubs', (req, res) => {
   res.json({ success: true, hubs: HUB_LOCATIONS });
 });
 
-// API: Financial Model Simulator
-app.post('/api/calculate-financials', (req, res) => {
-  const { dailyBookingsPerRoom = 8, numPods = 6 } = req.body;
-  const avgTicketPrice = 260;
-  const fixedOpex = 135000;
-
-  const monthlyRevenue = Math.round(dailyBookingsPerRoom * numPods * 30 * (avgTicketPrice / 6));
-  const monthlyProfit = monthlyRevenue - fixedOpex;
-
-  res.json({
-    dailyBookingsPerRoom,
-    monthlyRevenue,
-    fixedOpex,
-    monthlyProfit,
-    isProfitable: monthlyProfit > 0
-  });
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 });
 
-// API: Guest Pod Booking (Homepage Instant Pass Generator)
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ success: false, message: 'Email already registered' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ name, email, password: hashedPassword });
+    await user.save();
+
+    const token = jwt.sign({ userId: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ success: true, token, user: { name: user.name, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error during registration' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ success: false, message: 'User not found' });
+
+    const validPass = await bcrypt.compare(password, user.password);
+    if (!validPass) return res.status(400).json({ success: false, message: 'Invalid password' });
+
+    const token = jwt.sign({ userId: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ success: true, token, user: { name: user.name, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error during login' });
+  }
+});
+
 app.post('/api/book-pod', (req, res) => {
   const { hubId, tier, timeSlot, passengerName } = req.body;
-
   const hub = HUB_LOCATIONS.find(h => h.id === hubId);
   const selectedTier = PRICING_TIERS[tier] || PRICING_TIERS.quick;
 
@@ -110,7 +126,6 @@ app.post('/api/book-pod', (req, res) => {
   }
 
   hub.availablePods -= 1;
-
   const newBooking = {
     bookingId: 'FS-' + Math.floor(100000 + Math.random() * 900000),
     passengerName: passengerName || 'Guest Traveler',
@@ -129,69 +144,22 @@ app.post('/api/book-pod', (req, res) => {
   });
 });
 
-// --- AUTHENTICATION ROUTES ---
+app.post('/api/calculate-financials', (req, res) => {
+  const { dailyBookingsPerRoom = 8, numPods = 6 } = req.body;
+  const avgTicketPrice = 260;
+  const fixedOpex = 135000;
+  const monthlyRevenue = Math.round(dailyBookingsPerRoom * numPods * 30 * (avgTicketPrice / 6));
+  const monthlyProfit = monthlyRevenue - fixedOpex;
 
-// Register User
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ success: false, message: 'Email already registered' });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword });
-    await user.save();
-
-    const token = jwt.sign({ userId: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ success: true, token, user: { name: user.name, email: user.email } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error during registration' });
-  }
+  res.json({
+    dailyBookingsPerRoom,
+    monthlyRevenue,
+    fixedOpex,
+    monthlyProfit,
+    isProfitable: monthlyProfit > 0
+  });
 });
 
-// Login User
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ success: false, message: 'User not found' });
-
-    const validPass = await bcrypt.compare(password, user.password);
-    if (!validPass) return res.status(400).json({ success: false, message: 'Invalid password' });
-
-    const token = jwt.sign({ userId: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ success: true, token, user: { name: user.name, email: user.email } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error during login' });
-  }
-});
-
-// --- PROTECTED USER DASHBOARD ROUTES ---
-
-// Create User Booking (Saved to Database)
-app.post('/api/bookings', authenticateToken, async (req, res) => {
-  try {
-    const { hubName, tierName, duration, amount, timeSlot } = req.body;
-    const bookingId = 'FS-' + Math.floor(100000 + Math.random() * 900000);
-
-    const booking = new Booking({
-      userId: req.user.userId,
-      bookingId,
-      hubName,
-      tierName,
-      duration: duration || 20,
-      amount: amount || 199,
-      timeSlot
-    });
-
-    await booking.save();
-    res.json({ success: true, booking });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to complete booking' });
-  }
-});
-
-// Fetch User's Booking History
 app.get('/api/user/bookings', authenticateToken, async (req, res) => {
   try {
     const bookings = await Booking.find({ userId: req.user.userId }).sort({ createdAt: -1 });
@@ -201,5 +169,4 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
   }
 });
 
-// Start Server
-app.listen(PORT, () => console.log(`FRESHSPACE Full-Stack App running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
