@@ -1,12 +1,15 @@
 {
   "name": "freshspace-app",
-  "version": "1.0.0",
-  "description": "FRESHSPACE Node.js application",
+  "version": "2.0.0",
+  "description": "FRESHSPACE Full-Stack Booking Application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.0"
   }
 }
