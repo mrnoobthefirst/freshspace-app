@@ -9,7 +9,6 @@
         :root {
             --bg: #090d16;
             --surface: #131b2e;
-            --surface-card: #1c273e;
             --primary: #00f2fe;
             --accent: #10b981;
             --text: #f8fafc;
@@ -20,39 +19,33 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); color: var(--text); padding-bottom: 5rem; }
 
-        /* Navigation with Auth Button */
         nav { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 8%; border-bottom: 1px solid var(--border); background: rgba(9,13,22,0.9); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
         .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; text-decoration: none; }
         
-        .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+        .nav-right { display: flex; align-items: center; gap: 1rem; }
         .btn-auth { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; text-decoration: none; transition: 0.2s; cursor: pointer; }
         .btn-auth:hover { background: var(--primary); color: #000; }
+        .btn-logout { background: rgba(244, 63, 94, 0.2); border: 1px solid #f43f5e; color: #f43f5e; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; text-decoration: none; cursor: pointer; }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
-        h1, h2, h3 { font-weight: 800; }
         .section-title { font-size: 2rem; margin-bottom: 0.5rem; text-align: center; }
         .section-subtitle { text-align: center; color: var(--muted); margin-bottom: 2.5rem; }
 
-        /* Grid */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; transition: 0.3s; }
         .card:hover { border-color: var(--primary); transform: translateY(-3px); }
 
-        /* Interactive Booking Widget */
         .booking-widget { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; max-width: 750px; margin: 0 auto; }
         .form-group { margin-bottom: 1.5rem; }
         label { display: block; margin-bottom: 0.5rem; color: var(--muted); font-size: 0.9rem; }
         input, select { width: 100%; padding: 0.9rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: #fff; font-size: 1rem; outline: none; }
-        input:focus, select:focus { border-color: var(--primary); }
+        input:focus { border-color: var(--primary); }
 
-        .btn { display: inline-block; width: 100%; background: linear-gradient(135deg, var(--primary), #4facfe); color: #000; font-weight: 700; padding: 1rem; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; text-align: center; transition: 0.2s; }
-        .btn:hover { opacity: 0.9; transform: scale(1.01); }
+        .btn { display: inline-block; width: 100%; background: linear-gradient(135deg, var(--primary), #4facfe); color: #000; font-weight: 700; padding: 1rem; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; text-align: center; }
 
-        /* Ticket Confirmation */
         .ticket { display: none; background: #0f172a; border: 2px dashed var(--primary); border-radius: 16px; padding: 2rem; text-align: center; margin-top: 2rem; }
         .ticket img { margin: 1.5rem 0; border-radius: 8px; }
 
-        /* Financial Simulator Slider */
         .sim-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; margin-top: 3rem; }
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center; margin-top: 1.5rem; }
         .stat-card { background: var(--bg); padding: 1.2rem; border-radius: 12px; border: 1px solid var(--border); }
@@ -63,16 +56,14 @@
 
     <nav>
         <a href="/" class="logo">FRESHSPACE</a>
-        <div class="nav-right">
-            <span style="color: var(--muted); font-size: 0.9rem; display: none; @media(min-width: 600px){display:inline;}">Ultra-Hygienic Transit Pods</span>
-            <!-- LOGIN / SIGN UP BUTTON ADDED HERE -->
+        <div class="nav-right" id="nav-actions">
+            <!-- Dynamically loaded via JavaScript -->
             <a href="/login.html" class="btn-auth">Login / Sign Up</a>
         </div>
     </nav>
 
     <div class="container">
         
-        <!-- Live Hub Availability Section -->
         <section style="margin-bottom: 4rem;">
             <h2 class="section-title">Live Pod Availability</h2>
             <p class="section-subtitle">Realtime hub tracking powered by our server API</p>
@@ -81,7 +72,6 @@
             </div>
         </section>
 
-        <!-- Interactive Live Booking System -->
         <section style="margin-bottom: 5rem;">
             <h2 class="section-title">Book Your Micro-Rest Session</h2>
             <p class="section-subtitle">Reserve online, receive your digital key, unlock instantly</p>
@@ -95,9 +85,7 @@
 
                     <div class="form-group">
                         <label>Select Location Hub</label>
-                        <select id="hubSelect" required>
-                            <!-- Dynamically loaded -->
-                        </select>
+                        <select id="hubSelect" required></select>
                     </div>
 
                     <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -129,7 +117,6 @@
             </div>
         </section>
 
-        <!-- Interactive Investor Calculator -->
         <section>
             <h2 class="section-title">Interactive Financial Simulator</h2>
             <p class="section-subtitle">Simulate Unit Economics (Per Hub - 6 Pods)</p>
@@ -158,7 +145,35 @@
     </div>
 
     <script>
-        // Fetch Live Hub Locations from Server API
+        // Check User Auth State
+        async function checkAuthState() {
+            const token = localStorage.getItem('token');
+            const navActions = document.getElementById('nav-actions');
+
+            if (token) {
+                try {
+                    const res = await fetch('/api/auth/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        navActions.innerHTML = `
+                            <a href="/account.html" class="btn-auth">My Account (${data.user.name.split(' ')[0]})</a>
+                            <button onclick="logout()" class="btn-logout">Logout</button>
+                        `;
+                        document.getElementById('passengerName').value = data.user.name;
+                        return;
+                    }
+                } catch(e){}
+            }
+            navActions.innerHTML = `<a href="/login.html" class="btn-auth">Login / Sign Up</a>`;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.reload();
+        }
+
         async function loadHubs() {
             const res = await fetch('/api/hubs');
             const data = await res.json();
@@ -177,15 +192,12 @@
                         <p style="color: var(--muted); font-size: 0.9rem;">Pods Status: <b>${hub.availablePods} / ${hub.totalPods} Available</b></p>
                     </div>
                 `;
-
                 hubSelect.innerHTML += `<option value="${hub.id}">${hub.name} (${hub.availablePods} Pods Available)</option>`;
             });
         }
 
-        // Handle Booking Submission via Express API
         document.getElementById('booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const payload = {
                 passengerName: document.getElementById('passengerName').value,
                 hubId: document.getElementById('hubSelect').value,
@@ -200,11 +212,10 @@
             });
 
             const result = await res.json();
-
             if (result.success) {
                 document.getElementById('qr-code').src = result.qrCodeUrl;
                 document.getElementById('ticket-id').innerText = result.booking.bookingId;
-                document.getElementById('ticket-details').innerText = `${result.booking.passengerName} | ${result.booking.hubName} | Tier: ${result.booking.tierName} (${result.booking.duration} mins)`;
+                document.getElementById('ticket-details').innerText = `${result.booking.passengerName} | ${result.booking.hubName} | Tier: ${result.booking.tierName}`;
                 document.getElementById('ticket-display').style.display = 'block';
                 loadHubs();
             } else {
@@ -212,10 +223,8 @@
             }
         });
 
-        // Run Interactive Pitch Financials API
         async function runFinancialSim(val) {
             document.getElementById('bookings-label').innerText = `${val} Bookings/Day`;
-
             const res = await fetch('/api/calculate-financials', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -223,14 +232,13 @@
             });
 
             const data = await res.json();
-
             document.getElementById('sim-rev').innerText = `₹${data.monthlyRevenue.toLocaleString()}`;
-            
             const profitElem = document.getElementById('sim-profit');
             profitElem.innerText = `${data.monthlyProfit >= 0 ? '+' : ''}₹${data.monthlyProfit.toLocaleString()}`;
             profitElem.style.color = data.monthlyProfit >= 0 ? 'var(--accent)' : '#f43f5e';
         }
 
+        checkAuthState();
         loadHubs();
     </script>
 </body>
