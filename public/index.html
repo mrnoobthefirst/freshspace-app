@@ -20,8 +20,13 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); color: var(--text); padding-bottom: 5rem; }
 
-        nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 8%; border-bottom: 1px solid var(--border); background: rgba(9,13,22,0.9); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; }
+        /* Navigation with Auth Button */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 8%; border-bottom: 1px solid var(--border); background: rgba(9,13,22,0.9); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; text-decoration: none; }
+        
+        .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+        .btn-auth { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; text-decoration: none; transition: 0.2s; cursor: pointer; }
+        .btn-auth:hover { background: var(--primary); color: #000; }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
         h1, h2, h3 { font-weight: 800; }
@@ -57,8 +62,12 @@
 <body>
 
     <nav>
-        <div class="logo">FRESHSPACE</div>
-        <span style="color: var(--muted); font-size: 0.9rem;">Ultra-Hygienic Transit Pods</span>
+        <a href="/" class="logo">FRESHSPACE</a>
+        <div class="nav-right">
+            <span style="color: var(--muted); font-size: 0.9rem; display: none; @media(min-width: 600px){display:inline;}">Ultra-Hygienic Transit Pods</span>
+            <!-- LOGIN / SIGN UP BUTTON ADDED HERE -->
+            <a href="/login.html" class="btn-auth">Login / Sign Up</a>
+        </div>
     </nav>
 
     <div class="container">
@@ -95,10 +104,10 @@
                         <div class="form-group">
                             <label>Service Tier</label>
                             <select id="tierSelect" required>
-                                <option value="express">Express Restroom (10 mins) - ₹49</option> <!-- -->
-                                <option value="quick" selected>Quick Refresh (20 mins) - ₹199</option> <!-- -->
-                                <option value="full">Full Shower & Kit (35 mins) - ₹349</option> <!-- -->
-                                <option value="executive">Executive Transit Pass (60 mins) - ₹2499</option> <!-- -->
+                                <option value="express">Express Restroom (10 mins) - ₹49</option>
+                                <option value="quick" selected>Quick Refresh (20 mins) - ₹199</option>
+                                <option value="full">Full Shower & Kit (35 mins) - ₹349</option>
+                                <option value="executive">Executive Transit Pass (60 mins) - ₹2499</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -126,21 +135,21 @@
             <p class="section-subtitle">Simulate Unit Economics (Per Hub - 6 Pods)</p>
 
             <div class="sim-box">
-                <label style="font-size: 1rem; font-weight: 600;">Adjust Daily Bookings per Pod: <span id="bookings-label" style="color: var(--primary);">8 Bookings/Day</span></label> <!-- -->
+                <label style="font-size: 1rem; font-weight: 600;">Adjust Daily Bookings per Pod: <span id="bookings-label" style="color: var(--primary);">8 Bookings/Day</span></label>
                 <input type="range" id="simSlider" min="2" max="20" value="8" style="margin-top: 1rem;" oninput="runFinancialSim(this.value)">
 
                 <div class="stat-grid">
                     <div class="stat-card">
                         <label>Monthly Revenue</label>
-                        <div class="stat-value" id="sim-rev">₹1,87,000</div> <!-- -->
+                        <div class="stat-value" id="sim-rev">₹1,87,000</div>
                     </div>
                     <div class="stat-card">
                         <label>Est. Fixed OPEX</label>
-                        <div class="stat-value" style="color: #f43f5e;">₹1,35,000</div> <!-- -->
+                        <div class="stat-value" style="color: #f43f5e;">₹1,35,000</div>
                     </div>
                     <div class="stat-card">
                         <label>Est. Net Profit</label>
-                        <div class="stat-value" id="sim-profit" style="color: var(--accent);">+₹52,000</div> <!-- -->
+                        <div class="stat-value" id="sim-profit" style="color: var(--accent);">+₹52,000</div>
                     </div>
                 </div>
             </div>
@@ -161,16 +170,14 @@
             hubSelect.innerHTML = '';
 
             data.hubs.forEach(hub => {
-                // Populate Card Grid
                 hubsGrid.innerHTML += `
                     <div class="card">
-                        <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--primary); font-weight: 700;">${hub.type} Hub</span> <!-- -->
+                        <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--primary); font-weight: 700;">${hub.type} Hub</span>
                         <h3 style="margin: 0.5rem 0;">${hub.name}</h3>
                         <p style="color: var(--muted); font-size: 0.9rem;">Pods Status: <b>${hub.availablePods} / ${hub.totalPods} Available</b></p>
                     </div>
                 `;
 
-                // Populate Dropdown Options
                 hubSelect.innerHTML += `<option value="${hub.id}">${hub.name} (${hub.availablePods} Pods Available)</option>`;
             });
         }
@@ -199,7 +206,7 @@
                 document.getElementById('ticket-id').innerText = result.booking.bookingId;
                 document.getElementById('ticket-details').innerText = `${result.booking.passengerName} | ${result.booking.hubName} | Tier: ${result.booking.tierName} (${result.booking.duration} mins)`;
                 document.getElementById('ticket-display').style.display = 'block';
-                loadHubs(); // Refresh hub stock
+                loadHubs();
             } else {
                 alert(result.message);
             }
@@ -224,7 +231,6 @@
             profitElem.style.color = data.monthlyProfit >= 0 ? 'var(--accent)' : '#f43f5e';
         }
 
-        // Initialize Data on Load
         loadHubs();
     </script>
 </body>
